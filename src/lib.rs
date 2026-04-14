@@ -1,3 +1,20 @@
+//! Importless sealed traits — per-method visibility gates without requiring
+//! downstream callers to import a sealing type.
+//!
+//! From a downstream crate, only [`other::A::in_public`] is callable:
+//!
+//! ```
+//! use testing::other::{A, W};
+//! W.in_public();
+//! ```
+//!
+//! All other methods are rejected:
+//!
+//! ```compile_fail
+//! use testing::other::{A, W};
+//! W.in_crate();
+//! ```
+
 use crate::other::{A, W};
 
 fn test() {
@@ -9,12 +26,16 @@ fn test() {
     W.in_public();
 }
 
-/// Downstream seal: `in_public` is callable, everything else is not.
+/// Holds the public surface of the sealed trait.
+///
+/// Downstream can reach `in_public`:
 ///
 /// ```
 /// use testing::other::{A, W};
 /// W.in_public();
 /// ```
+///
+/// but not the inner-scoped methods:
 ///
 /// ```compile_fail
 /// use testing::other::{A, W};
@@ -60,9 +81,36 @@ pub mod other {
         impl VisibleInPub<Pub> for W {}
         pub struct Pub;
 
+        /// The witness type that carries the sealed impls.
+        ///
+        /// ```
+        /// use testing::other::{A, W};
+        /// let _ = W;
+        /// W.in_public();
+        /// ```
         pub struct W;
 
+        /// Sealed trait with per-method visibility gates.
+        ///
+        /// The [`A::in_public`] method is callable from any crate; the other
+        /// methods are gated to progressively narrower scopes.
+        ///
+        /// ```
+        /// use testing::other::{A, W};
+        /// W.in_public();
+        /// ```
+        ///
+        /// ```compile_fail
+        /// use testing::other::{A, W};
+        /// W.in_crate();
+        /// ```
         pub trait A<Visiblity> {
+            /// Callable from anywhere the trait is in scope.
+            ///
+            /// ```
+            /// use testing::other::{A, W};
+            /// W.in_public();
+            /// ```
             #[allow(private_bounds)]
             fn in_public(&self)
             where
@@ -70,6 +118,12 @@ pub mod other {
             {
             }
 
+            /// Callable only inside the defining private module.
+            ///
+            /// ```compile_fail
+            /// use testing::other::{A, W};
+            /// W.in_private();
+            /// ```
             #[allow(private_bounds)]
             fn in_private(&self)
             where
@@ -77,6 +131,12 @@ pub mod other {
             {
             }
 
+            /// Callable only inside the defining crate.
+            ///
+            /// ```compile_fail
+            /// use testing::other::{A, W};
+            /// W.in_crate();
+            /// ```
             #[allow(private_bounds)]
             fn in_crate(&self)
             where
@@ -84,6 +144,12 @@ pub mod other {
             {
             }
 
+            /// Callable only inside `crate::other`.
+            ///
+            /// ```compile_fail
+            /// use testing::other::{A, W};
+            /// W.in_other();
+            /// ```
             #[allow(private_bounds)]
             fn in_other(&self)
             where
