@@ -3,5 +3,12 @@
 version = 4
 
 [[package]]
+name = "inner"
+version = "0.1.0"
+dependencies = [
+ "testing",
+]
+
+[[package]]
 name = "testing"
 version = "0.1.0"
