@@ -48,12 +48,3 @@ The compiler has to resolve `V` to a concrete marker to check the bound, and *na
 Drop `<V>` and write a plain bound like `Self: VisibleInCrate` — it breaks. Trait resolution doesn't care whether a trait name is visible; if the impl exists, the bound is satisfied. A private helper trait alone won't block anything.
 
 The generic witness is what forces a concrete type to be named, and naming is the only thing visibility actually governs.
-
-## Caveat
-
-Method bounds reference private traits, so the impl needs `#[allow(private_bounds)]`.
-
-## Files
-
-- `src/lib.rs` — main example and doctests
-- `inner/src/main.rs` — downstream crate that can only call `in_public`
