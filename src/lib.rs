@@ -9,6 +9,27 @@ fn test() {
     W.in_public();
 }
 
+/// Downstream seal: `in_public` is callable, everything else is not.
+///
+/// ```
+/// use testing::other::{A, W};
+/// W.in_public();
+/// ```
+///
+/// ```compile_fail
+/// use testing::other::{A, W};
+/// W.in_private();
+/// ```
+///
+/// ```compile_fail
+/// use testing::other::{A, W};
+/// W.in_other();
+/// ```
+///
+/// ```compile_fail
+/// use testing::other::{A, W};
+/// W.in_crate();
+/// ```
 pub mod other {
     pub use crate::other::private::{A, W};
 
